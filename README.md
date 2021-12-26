@@ -6,17 +6,17 @@
 
 Now that you’ve run a container, what is a container? Simply put, a container is a sandboxed process on your machine that is isolated from all other processes on the host machine. That isolation leverages kernel namespaces and cgroups, features that have been in Linux for a long time. Docker has worked to make these capabilities approachable and easy to use. To summarize, a container:
 
-* is a runnable instance of an image. You can create, start, stop, move, or delete a container using the DockerAPI or CLI.
-* can be run on local machines, virtual machines or deployed to the cloud.
-* is portable (can be run on any OS)
-* Containers are isolated from each other and run their own software, binaries, and configurations.
+1. is a runnable instance of an image. You can create, start, stop, move, or delete a container using the DockerAPI or CLI.
+2. can be run on local machines, virtual machines or deployed to the cloud.
+3. is portable (can be run on any OS)
+4. Containers are isolated from each other and run their own software, binaries, and configurations.
 
-[Docker run](https://docs.docker.com/engine/reference/commandline/run/)
-[Docker ps](https://docs.docker.com/engine/reference/commandline/ps/)
-[Docker exec](https://docs.docker.com/engine/reference/commandline/exec/)
-[Docker stop](https://docs.docker.com/engine/reference/commandline/stop/)
-[Docker rm](https://docs.docker.com/engine/reference/commandline/rm/)
-[Docker logs](https://docs.docker.com/engine/reference/commandline/logs/)
+* [Docker run](https://docs.docker.com/engine/reference/commandline/run/)
+* [Docker ps](https://docs.docker.com/engine/reference/commandline/ps/)
+* [Docker exec](https://docs.docker.com/engine/reference/commandline/exec/)
+* [Docker stop](https://docs.docker.com/engine/reference/commandline/stop/)
+* [Docker rm](https://docs.docker.com/engine/reference/commandline/rm/)
+* [Docker logs](https://docs.docker.com/engine/reference/commandline/logs/)
 
 ```bash
 # Show the Docker version information
@@ -81,4 +81,23 @@ $ docker rm -f ['Container ID/Name']
 
 # Remove all stopped containers
 $ docker container prune [OPTIONS]
+```
+
+## Bind mounts
+
+```bash
+# Create directory to save data
+$ mkdir mongo_data
+
+$ docker run -d --name db -v /home/oem/Development/Learning/Docker/docker-experiments/mongo_data:/data/db mongo
+$ docker exec -it db bash 
+> mongo
+~ show dbs
+~ use data_base
+~ db.users.insert({"nombre": "Jaiden"})
+WriteResult({ "nInserted" : 1 })
+~ db.users.find()
+{ "_id" : ObjectId("61c81fe0bb44bd606e57136f"), "nombre" : "Jaiden" }
+~ exit
+> exit
 ```
