@@ -17,6 +17,9 @@ Now that you’ve run a container, what is a container? Simply put, a container 
 * [Docker stop](https://docs.docker.com/engine/reference/commandline/stop/)
 * [Docker rm](https://docs.docker.com/engine/reference/commandline/rm/)
 * [Docker logs](https://docs.docker.com/engine/reference/commandline/logs/)
+* [Use bind mounts](https://docs.docker.com/get-started/06_bind_mounts/)
+* [Use tmpfs mounts](https://docs.docker.com/storage/tmpfs/)
+* [Use volumes](https://docs.docker.com/storage/volumes/)
 
 ```bash
 # Show the Docker version information
@@ -87,7 +90,7 @@ $ docker container prune [OPTIONS]
 
 ```bash
 # Create directory to save data
-$ mkdir mongo_data
+$ mkdir mongo_data_bind_mount
 
 $ docker run -d --name db -v /home/oem/Development/Learning/Docker/docker-experiments/mongo_data:/data/db mongo
 $ docker exec -it db bash 
@@ -100,4 +103,24 @@ WriteResult({ "nInserted" : 1 })
 { "_id" : ObjectId("61c81fe0bb44bd606e57136f"), "nombre" : "Jaiden" }
 ~ exit
 > exit
+```
+
+## Volumes
+
+```bash
+$ docker volume ls
+$ docker volume create data_volume
+$ docker run -d --name db --mount src=data_volume,dst=/data/db mongo
+$ docker inspec db 
+$ docker exec -it db bash 
+> mongo
+~ show dbs
+~ use data_base
+~ db.users.insert({"nombre": "Jaiden"})
+WriteResult({ "nInserted" : 1 })
+~ db.users.find()
+{ "_id" : ObjectId("61c81fe0bb44bd606e57136f"), "nombre" : "Jaiden" }
+~ exit
+> exit
+$ docker volume rm ['Volume name']
 ```
