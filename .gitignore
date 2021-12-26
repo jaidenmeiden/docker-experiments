@@ -41,6 +41,7 @@
 # .idea/modules.xml
 .idea/*.iml
 .idea/*.xml
+.idea/**/*.xml
 .idea/*.gitignore
 # .idea/modules
 # *.iml
