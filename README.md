@@ -150,3 +150,11 @@ $ docker cp copytest:/testing/test_copied.txt file_extracted.txt # Files
 
 ![Transfer information](images/transfert.png)
 
+## Images
+
+[Images](https://docs.docker.com/engine/reference/commandline/images/)
+
+```bash
+$ docker image ls
+$ docker pull ubuntu:20.04
+```
