@@ -152,9 +152,23 @@ $ docker cp copytest:/testing/test_copied.txt file_extracted.txt # Files
 
 ## Images
 
-[Images](https://docs.docker.com/engine/reference/commandline/images/)
+* [Images](https://docs.docker.com/engine/reference/commandline/images/)
+* [Dockerfile](https://docs.docker.com/engine/reference/builder/)
 
 ```bash
 $ docker image ls
 $ docker pull ubuntu:20.04
+$ mkdir ubuntu
+$ touch ubuntu/Dockerfile
+```
+
+```Dockerfile
+FROM ubuntu:latest
+
+RUN touch /usr/src/test:dockerfile.txt
+```
+
+```bash
+$ cd ubuntu
+$ docker build -t ubuntu:test_ubuntu . # Use by default Dockerfile into directory
 ```
