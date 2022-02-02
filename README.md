@@ -17,9 +17,6 @@ Now that you’ve run a container, what is a container? Simply put, a container 
 * [Docker stop](https://docs.docker.com/engine/reference/commandline/stop/)
 * [Docker rm](https://docs.docker.com/engine/reference/commandline/rm/)
 * [Docker logs](https://docs.docker.com/engine/reference/commandline/logs/)
-* [Use bind mounts](https://docs.docker.com/get-started/06_bind_mounts/)
-* [Use tmpfs mounts](https://docs.docker.com/storage/tmpfs/)
-* [Use volumes](https://docs.docker.com/storage/volumes/)
 
 ```bash
 # Show the Docker version information
@@ -88,6 +85,8 @@ $ docker container prune [OPTIONS]
 
 ## Bind mounts
 
+[Use bind mounts](https://docs.docker.com/get-started/06_bind_mounts/)
+
 ```bash
 # Create directory to save data
 $ mkdir mongo_data_bind_mount
@@ -107,6 +106,8 @@ WriteResult({ "nInserted" : 1 })
 
 ## Volumes
 
+[Use volumes](https://docs.docker.com/storage/volumes/)
+
 ```bash
 $ docker volume ls
 $ docker volume create data_volume
@@ -124,3 +125,28 @@ WriteResult({ "nInserted" : 1 })
 > exit
 $ docker volume rm ['Volume name']
 ```
+
+## Insert and extract files from a container (Docker cp)
+
+[Use docker cp](https://docs.docker.com/engine/reference/commandline/cp/)
+
+```bash
+# Insert files
+$ touch test.txt
+$ docker run -d --name copytest ubuntu tail -f /dev/null
+$ docker exec -it copytest bash # Enter into container
+> mkdir testing 
+> exit
+$ docker cp tes.txt copytest:/testing/test_copied.txt
+$ docker exec -it copytest bash # Enter into container
+> cd testing/
+> ls -la
+< -rw-r--r-- 1 1000 1000    0 Feb  2 15:58 test_copied.txt
+> exit
+# Extract files
+$ docker cp copytest:/testing directory_extracted # Directories
+$ docker cp copytest:/testing/test_copied.txt file_extracted.txt # Files
+```
+
+![Transfer information](images/transfert.png)
+
