@@ -154,7 +154,7 @@ $ docker cp copytest:/testing/test_copied.txt file_extracted.txt # Files
 
 * [Images](https://docs.docker.com/engine/reference/commandline/images/)
 * [Dockerfile](https://docs.docker.com/engine/reference/builder/)
-
+ 
 ```bash
 $ docker image ls
 $ docker pull ubuntu:20.04
@@ -165,10 +165,24 @@ $ touch ubuntu/Dockerfile
 ```Dockerfile
 FROM ubuntu:latest
 
-RUN touch /usr/src/test:dockerfile.txt
+RUN touch /usr/src/test/dockerfile.txt
 ```
 
 ```bash
 $ cd ubuntu
 $ docker build -t ubuntu:test_ubuntu . # Use by default Dockerfile into directory
+# Create container with previus image
+$ docker run -it ubuntu:test_ubuntu
+> ll
+> cd /usr/src/test
+> ls -la
+> exit
+$ docker images ls
+# Generate a  new tag fro the same image
+$ docker tag ubuntu:test_ubuntu jaidenmeiden/ubuntu:test_ubuntu
+$ docker login
+$ docker push jaidenmeiden/ubuntu:test_ubuntu
+
 ```
+
+
