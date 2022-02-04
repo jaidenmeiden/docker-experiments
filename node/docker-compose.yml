@@ -2,13 +2,17 @@ version: "3.8"
 
 services:
   app:
-    image: node_test
+    build: . # Directly create the container from files with the point (.), excluding static images
     environment:
       MONGO_URL: "mongodb://db:27017/test"
     depends_on:
       - db
     ports:
       - "3000:3000"
+    volumes:
+      - .:/usr/src
+      - /usr/src/node_modules # Block overwriting on this location
+    command: npx nodemon index.js # We inform the container that there are changes and it rebuild application
 
   db:
     image: mongo

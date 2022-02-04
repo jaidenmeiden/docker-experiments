@@ -685,3 +685,133 @@ Removing network node_files_default
 ...
 
 ```
+
+### Docker compose like developer tool
+
+Change configuration to initial `docker-compose.yml` to generate an image with available files into the application and not from static image. We must replace the static image, due to the concept `An image is inmutable`.
+
+```yaml
+version: "3.8"
+
+services:
+  app:
+    build: .
+    environment:
+      MONGO_URL: "mongodb://db:27017/test"
+    depends_on:
+      - db
+    ports:
+      - "3000:3000"
+
+  db:
+    image: mongo
+```
+
+Execute:
+
+```bash
+$ docker-compose build
+$ docker-compose up -d
+$ docker ps
+...
+CONTAINER ID   IMAGE            COMMAND                  CREATED          STATUS          PORTS                                       NAMES
+0057d4bb700c   node_files_app   "docker-entrypoint.s…"   27 seconds ago   Up 26 seconds   0.0.0.0:3000->3000/tcp, :::3000->3000/tcp   node_files_app_1
+6aa9b2281826   mongo            "docker-entrypoint.s…"   27 seconds ago   Up 27 seconds   27017/tcp                                   node_files_db_1
+...
+```
+
+Now we need to view the code changes into our containers. According to previous, we have to make our files available constantly with bind mounts, so that we don't have to build the container frequently.
+
+```yaml
+version: "3.8"
+
+services:
+  app:
+    build: .
+    environment:
+      MONGO_URL: "mongodb://db:27017/test"
+    depends_on:
+      - db
+    ports:
+      - "3000:3000"
+    volumes:
+      - .:/usr/src
+
+  db:
+    image: mongo
+```
+
+Execute:
+
+```bash
+$ docker-compose up -d
+$ docker ps
+...
+CONTAINER ID   IMAGE     COMMAND                  CREATED         STATUS         PORTS       NAMES
+6aa9b2281826   mongo     "docker-entrypoint.s…"   9 minutes ago   Up 9 minutes   27017/tcp   node_files_db_1
+...
+
+$ docker-compose logs app
+...
+Attaching to node_files_app_1
+app_1  | internal/modules/cjs/loader.js:818
+app_1  |   throw err;
+app_1  |   ^
+app_1  | 
+app_1  | Error: Cannot find module 'express'
+app_1  | Require stack:
+app_1  | - /usr/src/index.js
+app_1  |     at Function.Module._resolveFilename (internal/modules/cjs/loader.js:815:15)
+app_1  |     at Function.Module._load (internal/modules/cjs/loader.js:667:27)
+app_1  |     at Module.require (internal/modules/cjs/loader.js:887:19)
+app_1  |     at require (internal/modules/cjs/helpers.js:74:18)
+app_1  |     at Object.<anonymous> (/usr/src/index.js:1:17)
+app_1  |     at Module._compile (internal/modules/cjs/loader.js:999:30)
+app_1  |     at Object.Module._extensions..js (internal/modules/cjs/loader.js:1027:10)
+app_1  |     at Module.load (internal/modules/cjs/loader.js:863:32)
+app_1  |     at Function.Module._load (internal/modules/cjs/loader.js:708:14)
+app_1  |     at Function.executeUserEntryPoint [as runMain] (internal/modules/run_main.js:60:12) {
+app_1  |   code: 'MODULE_NOT_FOUND',
+app_1  |   requireStack: [ '/usr/src/index.js' ]
+app_1  | }
+
+...
+
+```
+
+Review browser: http://localhost:3000/
+
+If we execute the previous command (`docker ps`) we can see that the container `node_files_app_1` is broken, in addition, we can ckeck the reason for this by running `docker-compose logs app`. To solve that, we must modify the `docker-compose.yml` file:  
+
+```yaml
+version: "3.8"
+
+services:
+  app:
+    build: . # Directly create the container from files with the point (.), excluding static images
+    environment:
+      MONGO_URL: "mongodb://db:27017/test"
+    depends_on:
+      - db
+    ports:
+      - "3000:3000"
+    volumes:
+      - .:/usr/src
+      - /usr/src/node_modules # Block overwriting on this location
+    command: npx nodemon index.js # We inform the container that there are changes and it rebuild application
+
+  db:
+    image: mongo
+```
+
+```bash
+$ docker-compose up -d
+$ docker ps
+...
+CONTAINER ID   IMAGE            COMMAND                  CREATED          STATUS          PORTS                                       NAMES
+3ade29412d47   node_files_app   "docker-entrypoint.s…"   12 seconds ago   Up 11 seconds   0.0.0.0:3000->3000/tcp, :::3000->3000/tcp   node_files_app_1
+6aa9b2281826   mongo            "docker-entrypoint.s…"   21 minutes ago   Up 21 minutes   27017/tcp                                   node_files_db_1
+
+# Verify always logs
+$ docker-compose logs -f app
+...
