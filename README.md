@@ -406,7 +406,7 @@ $ docker network inspect my_network
 ]
 ...
 ```
-Code section from index.js (Node application) where the application catch a `env` variable
+Code section from `index.js` (Node application) where the application catch a `env` variable
 
 ```javascript
 // Connection URL
@@ -416,6 +416,14 @@ const mongoUrl = process.env.MONGO_URL || 'mongodb://localhost:27017/test';
 Init container with behind variations
 
 ```bash
+$ docker run -d --name app -p 3000:3000 --env MONGO_URL=mongodb://db:27017/test node_test 
+$ docker ps
+...
+CONTAINER ID   IMAGE       COMMAND                  CREATED          STATUS          PORTS                                       NAMES
+40d491ab88c9   node_test   "docker-entrypoint.s…"   2 minutes ago    Up 2 minutes    0.0.0.0:3000->3000/tcp, :::3000->3000/tcp   app
+e05c7914226a   mongo       "docker-entrypoint.s…"   26 minutes ago   Up 26 minutes   27017/tcp                                   db
+...
+
 $ docker network connect my_network app
 $ docker network inspect my_network
 ...
@@ -465,14 +473,6 @@ $ docker network inspect my_network
     }
 ]
 ...
-
-$ docker run -d --name app -p 3000:3000 --env MONGO_URL=mongodb://db:27017/test node_test 
-$ docker ps
-...
-CONTAINER ID   IMAGE       COMMAND                  CREATED          STATUS          PORTS                                       NAMES
-40d491ab88c9   node_test   "docker-entrypoint.s…"   2 minutes ago    Up 2 minutes    0.0.0.0:3000->3000/tcp, :::3000->3000/tcp   app
-e05c7914226a   mongo       "docker-entrypoint.s…"   26 minutes ago   Up 26 minutes   27017/tcp                                   db
-...
 ```
 
 ### Docker compose
@@ -513,11 +513,33 @@ CONTAINER ID   IMAGE     COMMAND   CREATED   STATUS    PORTS     NAMES
 
 $ docker-compose up
 
+...
+Creating node_files_db_1 ... done
+Creating node_files_app_1 ... done
+Attaching to node_files_db_1, node_files_app_1
+db_1   | {"t":{"$date":"2022-02-04T21:34:58.401+00:00"},"s":"I",...
+...
+
+$ docker ps
+$ docker ps -a
+$ docker-compose up -d 
+...
+Creating node_files_db_1 ... done
+Creating node_files_app_1 ... done
+...
+
+$ docker ps
+...
+CONTAINER ID   IMAGE       COMMAND                  CREATED          STATUS         PORTS                                       NAMES
+ad97510c77c6   node_test   "docker-entrypoint.s…"   18 minutes ago   Up 2 minutes   0.0.0.0:3000->3000/tcp, :::3000->3000/tcp   node_files_app_1
+3bed569350c6   mongo       "docker-entrypoint.s…"   18 minutes ago   Up 2 minutes   27017/tcp                                   node_files_db_1
+...
 ```
 
 Possible errors:
 
 ```bash
+Version in "./docker-compose.yml" is unsupported. You might be seeing this error because you're using the wrong Compose file version. Either specify a supported version
 ```
 Solution:
 
@@ -528,12 +550,34 @@ $ docker-compose --version
 docker-compose version 1.25.0, build unknown
 ...
 
-# Uninstall Docker compose 1
+# Uninstall Docker compose
 $ where docker-compose 
 $ sudo rm /usr/bin/docker-compose
 $ sudo apt autoremove
+```
 
-# Install docker version 2
+[Install Docker Compose](https://docs.docker.com/compose/install/)
+
+#### Install docker version 1
+```bash
+$ mkdir -p ~/.local/bin/docker-compose
+$ sudo curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname -s)-$(uname -m)" -o ~/.local/bin/docker-compose
+$ chmod +x ~/.local/bin/docker-compose
+
+# If the command docker-compose fails after installation, check your path. You can also create a symbolic link to /usr/bin or any other directory in your path.
+$ sudo ln -s ~/.local/bin/docker-compose /usr/bin/docker-compose
+$ docker compose version
+...
+docker-compose version 1.29.2, build unknown
+...
+
+# Uninstall Docker Compose 1
+$ sudo rm ~/.local/bin/docker-compose
+
+```
+
+#### Install docker version 2
+```bash
 $ mkdir -p ~/.docker/cli-plugins/
 $ curl -SL https://github.com/docker/compose/releases/download/v2.2.3/docker-compose-linux-x86_64 -o ~/.docker/cli-plugins/docker-compose
 $ chmod +x ~/.docker/cli-plugins/docker-compose
