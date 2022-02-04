@@ -590,3 +590,98 @@ Docker Compose version v2.2.3
 $ sudo rm ~/.docker/cli-plugins/docker-compose
 
 ```
+
+### Subcommands docker compose
+
+```bash
+$ docker ps
+...
+CONTAINER ID   IMAGE       COMMAND                  CREATED          STATUS         PORTS                                       NAMES
+ad97510c77c6   node_test   "docker-entrypoint.s…"   18 minutes ago   Up 2 minutes   0.0.0.0:3000->3000/tcp, :::3000->3000/tcp   node_files_app_1
+3bed569350c6   mongo       "docker-entrypoint.s…"   18 minutes ago   Up 2 minutes   27017/tcp                                   node_files_db_1
+...
+
+$ docker network ls
+...
+NETWORK ID     NAME                                        DRIVER    SCOPE
+d49adbd57825   bridge                                      bridge    local
+...
+bc680c9035a5   host                                        host      local
+f4cfb8cf3634   my_network                                  bridge    local
+811f8611e6fe   node_files_default                          bridge    local
+83b1c417fb81   none                                        null      local
+...
+
+$ docker network inspect node_files_default
+...
+[
+    {
+        "Name": "node_files_default",
+        "Id": "811f8611e6fed8710697c0795bda3b9022f5b4ecc2e2d88a83a98dd923e4894d",
+        "Created": "2022-02-04T22:26:56.159828859+01:00",
+        "Scope": "local",
+        "Driver": "bridge",
+        "EnableIPv6": false,
+        "IPAM": {
+            "Driver": "default",
+            "Options": null,
+            "Config": [
+                {
+                    "Subnet": "172.23.0.0/16",
+                    "Gateway": "172.23.0.1"
+                }
+            ]
+        },
+        "Internal": false,
+        "Attachable": true,
+        "Ingress": false,
+        "ConfigFrom": {
+            "Network": ""
+        },
+        "ConfigOnly": false,
+        "Containers": {
+            "3bed569350c6bbc9b1f91f895800f0e04d2b79206d4ef7bee1d86d5c7d89c704": {
+                "Name": "node_files_db_1",
+                "EndpointID": "f7f0306e7bd48db3b90c43bb5ff1a3ee4ba05bd521d9bd3c2a39e4c2f0ba4d63",
+                "MacAddress": "02:42:ac:17:00:02",
+                "IPv4Address": "172.23.0.2/16",
+                "IPv6Address": ""
+            },
+            "ad97510c77c6d07d4d4598008326b3213222a818bf67fd7b60d0d459dd20c632": {
+                "Name": "node_files_app_1",
+                "EndpointID": "3b48097e14e9527ee5cf00761f020a339c369aaa03831400bfce7bfbf0bb9138",
+                "MacAddress": "02:42:ac:17:00:03",
+                "IPv4Address": "172.23.0.3/16",
+                "IPv6Address": ""
+            }
+        },
+        "Options": {},
+        "Labels": {
+            "com.docker.compose.network": "default",
+            "com.docker.compose.project": "node_files",
+            "com.docker.compose.version": "1.29.2"
+        }
+    }
+]
+...
+
+# Container logs
+$ docker-compose logs
+$ docker-compose logs app # per service
+
+# Run command into container
+$ docker-compose exec app bash # Run bash into container app
+> ls -lac
+> exit
+
+# Destroy all containers from my excution
+$ docker-compose down
+...
+Stopping node_files_app_1 ... done
+Stopping node_files_db_1  ... done
+Removing node_files_app_1 ... done
+Removing node_files_db_1  ... done
+Removing network node_files_default
+...
+
+```
