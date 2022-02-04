@@ -162,7 +162,7 @@ $ mkdir ubuntu
 $ touch ubuntu/Dockerfile
 ```
 
-```Dockerfile
+```dockerfile
 FROM ubuntu:latest
 
 RUN touch /usr/src/test/dockerfile.txt
@@ -284,4 +284,194 @@ Server listening on port 3000!
 ```
 
 Review browser: http://localhost:3000/
+
+### Docker networking: collaboration between containers
+
+Adjust original Dockerfile to manage application based on `node` without `nodemon`
+
+```dockerfile
+FROM node:12
+
+COPY ["package.json", "package-lock.json", "/usr/src/"]
+
+WORKDIR /usr/src
+
+RUN npm install
+
+COPY [".", "/usr/src/"]
+
+EXPOSE 3000
+
+CMD ["node", "index.js"]
+```
+
+[Docker network](https://docs.docker.com/engine/reference/commandline/network/)
+
+```bash
+$ docker network ls 
+...
+NETWORK ID     NAME      DRIVER    SCOPE
+e54e43840649   bridge    bridge    local
+b62a386578b2   host      host      local
+cb2699850d72   none      null      local
+...
+
+# Create our network
+$ docker network create --attachable my_network
+$ docker network ls 
+
+...
+NETWORK ID     NAME         DRIVER    SCOPE
+e54e43840649   bridge       bridge    local
+b62a386578b2   host         host      local
+b7e0625aef1a   my_network   bridge    local
+cb2699850d72   none         null      local
+...
+
+$ docker network inspect my_network
+...
+[
+    {
+        "Name": "my_network",
+        "Id": "b7e0625aef1a2aebd752de880b643072134b60a98f7dfca3b7ef5fe1c031e43e",
+        "Created": "2022-02-04T19:05:00.461154705+01:00",
+        "Scope": "local",
+        "Driver": "bridge",
+        "EnableIPv6": false,
+        "IPAM": {
+            "Driver": "default",
+            "Options": {},
+            "Config": [
+                {
+                    "Subnet": "172.18.0.0/16",
+                    "Gateway": "172.18.0.1"
+                }
+            ]
+        },
+        "Internal": false,
+        "Attachable": true,
+        "Ingress": false,
+        "ConfigFrom": {
+            "Network": ""
+        },
+        "ConfigOnly": false,
+        "Containers": {},
+        "Options": {},
+        "Labels": {}
+    }
+]
+...
+
+$ docker run -d --name db mongo # Create new container
+$ docker network connect my_network db
+$ docker network inspect my_network
+...
+[
+    {
+        "Name": "my_network",
+        "Id": "b7e0625aef1a2aebd752de880b643072134b60a98f7dfca3b7ef5fe1c031e43e",
+        "Created": "2022-02-04T19:05:00.461154705+01:00",
+        "Scope": "local",
+        "Driver": "bridge",
+        "EnableIPv6": false,
+        "IPAM": {
+            "Driver": "default",
+            "Options": {},
+            "Config": [
+                {
+                    "Subnet": "172.18.0.0/16",
+                    "Gateway": "172.18.0.1"
+                }
+            ]
+        },
+        "Internal": false,
+        "Attachable": true,
+        "Ingress": false,
+        "ConfigFrom": {
+            "Network": ""
+        },
+        "ConfigOnly": false,
+        "Containers": {
+            "e05c7914226a9a6c5052bd5a0f2717ed74d51d9e5d335f2472b3b921a949bd1b": {
+                "Name": "db",
+                "EndpointID": "734941d8caa4149ee3ec3a328fa095ba72255e7e0349e181f150162211784214",
+                "MacAddress": "02:42:ac:12:00:02",
+                "IPv4Address": "172.18.0.2/16",
+                "IPv6Address": ""
+            }
+        },
+        "Options": {},
+        "Labels": {}
+    }
+]
+...
+```
+Code section from index.js (Node application) where the application catch a `env` variable
+
+```javascript
+// Connection URL
+const mongoUrl = process.env.MONGO_URL || 'mongodb://localhost:27017/test';
+```
+
+Init container with behind variations
+
+```bash
+$ docker network connect my_network app
+$ docker network inspect my_network
+...
+[
+    {
+        "Name": "my_network",
+        "Id": "b7e0625aef1a2aebd752de880b643072134b60a98f7dfca3b7ef5fe1c031e43e",
+        "Created": "2022-02-04T19:05:00.461154705+01:00",
+        "Scope": "local",
+        "Driver": "bridge",
+        "EnableIPv6": false,
+        "IPAM": {
+            "Driver": "default",
+            "Options": {},
+            "Config": [
+                {
+                    "Subnet": "172.18.0.0/16",
+                    "Gateway": "172.18.0.1"
+                }
+            ]
+        },
+        "Internal": false,
+        "Attachable": true,
+        "Ingress": false,
+        "ConfigFrom": {
+            "Network": ""
+        },
+        "ConfigOnly": false,
+        "Containers": {
+            "40d491ab88c98d1df00d452cdd0954bd3c5591b6ef3eb6fdbc1f03a96a1786ce": {
+                "Name": "app",
+                "EndpointID": "985b75faec75cf4c0eaac4aa0f5d69cd36825931a964acef49ca89652c137860",
+                "MacAddress": "02:42:ac:12:00:03",
+                "IPv4Address": "172.18.0.3/16",
+                "IPv6Address": ""
+            },
+            "e05c7914226a9a6c5052bd5a0f2717ed74d51d9e5d335f2472b3b921a949bd1b": {
+                "Name": "db",
+                "EndpointID": "734941d8caa4149ee3ec3a328fa095ba72255e7e0349e181f150162211784214",
+                "MacAddress": "02:42:ac:12:00:02",
+                "IPv4Address": "172.18.0.2/16",
+                "IPv6Address": ""
+            }
+        },
+        "Options": {},
+        "Labels": {}
+    }
+]
+...
+
+$ docker run --rm --name app -p 3000:3000 --env MONGO_URL=mongodb://db:27017/test node_test 
+$ docker ps
+...
+CONTAINER ID   IMAGE       COMMAND                  CREATED          STATUS          PORTS                                       NAMES
+40d491ab88c9   node_test   "docker-entrypoint.s…"   2 minutes ago    Up 2 minutes    0.0.0.0:3000->3000/tcp, :::3000->3000/tcp   app
+e05c7914226a   mongo       "docker-entrypoint.s…"   26 minutes ago   Up 26 minutes   27017/tcp                                   db
+...
+```
 
