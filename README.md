@@ -185,4 +185,12 @@ $ docker push jaidenmeiden/ubuntu:test_ubuntu
 
 ```
 
+## Layers system
+
+
+```bash
+$ docker history <image_name>
+$ dive <image_tag>
+
+```
 
