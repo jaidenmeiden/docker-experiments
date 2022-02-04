@@ -187,10 +187,51 @@ $ docker push jaidenmeiden/ubuntu:test_ubuntu
 
 ## Layers system
 
+[wagoodman/dive](https://github.com/wagoodman/dive)
 
 ```bash
 $ docker history <image_name>
 $ dive <image_tag>
 
 ```
+
+## Command line reference (Docker CLI)
+
+* [Docker run](https://docs.docker.com/engine/reference/run/)
+* [Docker build](https://docs.docker.com/engine/reference/commandline/build/)
+* [Docker pull](https://docs.docker.com/engine/reference/commandline/pull/)
+* [Docker push](https://docs.docker.com/engine/reference/commandline/push/)
+* [Docker commit](https://docs.docker.com/engine/reference/commandline/commit/)
+
+## Using docker to develop applications
+
+[Docker node example](https://github.com/platzi/docker.git)
+
+```bash
+$ git clone https://github.com/platzi/docker.git
+# Review inner files
+$ ls -la
+> ...
+> docker-compose.yml
+> Dockerfile
+> ...
+
+# Build images
+$ docker build -t node_test .
+
+# Review images
+$ docker image ls
+> ...
+REPOSITORY            TAG           IMAGE ID       CREATED              SIZE
+node_test             latest        7e40a5bf7cd3   About a minute ago   931MB
+> ...
+
+# Run container
+$ docker run --rm -p 3000:3000 node_test
+Server listening on port 3000!
+
+```
+
+Review browser
+http://localhost:3000/
 
