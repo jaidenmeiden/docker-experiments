@@ -8,7 +8,7 @@ services:
     depends_on:
       - db
     ports:
-      - "3000:3000"
+      - "3000-3003:3000"
     volumes:
       - .:/usr/src
       - /usr/src/node_modules # Block overwriting on this location

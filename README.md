@@ -815,3 +815,120 @@ CONTAINER ID   IMAGE            COMMAND                  CREATED          STATUS
 # Verify always logs
 $ docker-compose logs -f app
 ...
+```
+
+### Docker compose with our develop team: override
+
+* [Configurations](https://docs.docker.com/compose/extends/)
+* [Making sense of Docker Compose overrides](https://medium.com/it-dead-inside/making-sense-of-docker-compose-overrides-efb757460d64)
+
+```bash
+$ cd node_files
+$ touch docker-compose.override.yml
+$ docker-compose up -d
+...
+ERROR: Top level object in './docker-compose.override.yml' needs to be an object not '<class 'NoneType'>'.
+...
+```
+
+We can see an `error` because compose is very strict with its nomenclature and we have added `docker-compose.override.yml` file.
+
+With `docker-compose.override.yml` we can override original `docker-compose.yml` and test different options.
+
+**Warnings**:
+* Ports => Must be used into only YAML file from `docker-compose`
+
+```dockerfile
+version: "3.8"
+
+services:
+  app:
+    environment:
+      NEW_VARIABLE: "I am a new variable!"
+```
+
+```bash
+$ docker-compose up -d
+...
+node_files_db_1 is up-to-date
+Recreating node_files_app_1 ... done
+...
+
+# Run command into container
+$ docker-compose exec app bash # Run bash into container app
+> env
+...
+YARN_VERSION=1.22.17
+HOSTNAME=4d9e21287e77
+PWD=/usr/src
+HOME=/root
+MONGO_URL=mongodb://db:27017/test
+NODE_VERSION=12.22.10
+affinity:container==5d0afb57f497954018543493a1da115d85e46f1a84c60d6dffd9c32fd8f0a5d2
+TERM=xterm
+NEW_VARIABLE=I am a new variable!
+SHLVL=1
+PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+_=/usr/bin/env
+...
+> exit
+```
+
+#### Ports ranges
+To assign a port ranges we must to modify the `docker-compose.yml`
+
+```yaml
+version: "3.8"
+
+services:
+  app:
+    build: . # Directly create the container from files with the point (.), excluding static images
+    environment:
+      MONGO_URL: "mongodb://db:27017/test"
+    depends_on:
+      - db
+    ports:
+      - "3000-3003:3000"
+    volumes:
+      - .:/usr/src
+      - /usr/src/node_modules # Block overwriting on this location
+    command: npx nodemon index.js # We inform the container that there are changes and it rebuild application
+
+  db:
+    image: mongo
+```
+
+```bash
+$ docker-compose down
+$ docker ps
+...
+CONTAINER ID   IMAGE     COMMAND   CREATED   STATUS    PORTS     NAMES
+...
+
+$ docker-compose up -d --scale app=2
+$ docker ps
+...
+CONTAINER ID   IMAGE            COMMAND                  CREATED          STATUS          PORTS                                       NAMES
+eb197606e959   node_files_app   "docker-entrypoint.s…"   27 seconds ago   Up 21 seconds   0.0.0.0:3001->3000/tcp, :::3001->3000/tcp   node_files_app_2
+46d3aa01d14a   node_files_app   "docker-entrypoint.s…"   27 seconds ago   Up 21 seconds   0.0.0.0:3000->3000/tcp, :::3000->3000/tcp   node_files_app_1
+2eba694a6217   mongo            "docker-entrypoint.s…"   27 seconds ago   Up 21 seconds   27017/tcp                                   node_files_db_1
+
+...
+```
+
+Review browser: 
+* http://localhost:3000/
+* http://localhost:3001/
+
+```bash
+$ docker-compose down
+...
+Stopping node_files_app_2 ... done
+Stopping node_files_app_1 ... done
+Stopping node_files_db_1  ... done
+Removing node_files_app_2 ... done
+Removing node_files_app_1 ... done
+Removing node_files_db_1  ... done
+Removing network node_files_default
+...
+```
