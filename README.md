@@ -466,7 +466,7 @@ $ docker network inspect my_network
 ]
 ...
 
-$ docker run --rm --name app -p 3000:3000 --env MONGO_URL=mongodb://db:27017/test node_test 
+$ docker run -d --name app -p 3000:3000 --env MONGO_URL=mongodb://db:27017/test node_test 
 $ docker ps
 ...
 CONTAINER ID   IMAGE       COMMAND                  CREATED          STATUS          PORTS                                       NAMES
@@ -475,3 +475,74 @@ e05c7914226a   mongo       "docker-entrypoint.s…"   26 minutes ago   Up 26 min
 ...
 ```
 
+### Docker compose
+
+Compose is a tool for defining and running multi-container Docker applications. With Compose, you use a YAML file to configure your application’s services. Then, with a single command, you create and start all the services from your configuration. To learn more about all the features of Compose, see the list of features:
+
+1. Multiple isolated environments on a single host
+2. Preserve volume data when containers are created
+3. Only recreate containers that have changed
+4. Variables and moving a composition between environments
+
+* [Features](https://docs.docker.com/compose/#features)
+* [Docker compose](https://docs.docker.com/engine/reference/commandline/compose/)
+
+```yaml
+version: "3.8"
+
+services:
+  app:
+    image: node_test
+    environment:
+      MONGO_URL: "mongodb://db:27017/test"
+    depends_on:
+      - db
+    ports:
+      - "3000:3000"
+
+  db:
+    image: mongo
+```
+
+```bash
+$ docker rm -f app db
+$ docker ps
+...
+CONTAINER ID   IMAGE     COMMAND   CREATED   STATUS    PORTS     NAMES
+...
+
+$ docker-compose up
+
+```
+
+Possible errors:
+
+```bash
+```
+Solution:
+
+```bash
+# Verify docker-compose version
+$ docker-compose --version
+...
+docker-compose version 1.25.0, build unknown
+...
+
+# Uninstall Docker compose 1
+$ where docker-compose 
+$ sudo rm /usr/bin/docker-compose
+$ sudo apt autoremove
+
+# Install docker version 2
+$ mkdir -p ~/.docker/cli-plugins/
+$ curl -SL https://github.com/docker/compose/releases/download/v2.2.3/docker-compose-linux-x86_64 -o ~/.docker/cli-plugins/docker-compose
+$ chmod +x ~/.docker/cli-plugins/docker-compose
+$ docker compose version
+...
+Docker Compose version v2.2.3
+...
+
+# Uninstall Docker Compose 2
+$ sudo rm ~/.docker/cli-plugins/docker-compose
+
+```
