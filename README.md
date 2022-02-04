@@ -207,7 +207,25 @@ $ dive <image_tag>
 
 [Docker node example](https://github.com/platzi/docker.git)
 
+Original Dockerfile to manage application based on `node`
+
+```dockerfile
+FROM node:12
+
+COPY [".", "/usr/src/"]
+
+WORKDIR /usr/src
+
+RUN npm install
+
+EXPOSE 3000
+
+CMD ["node", "index.js"]
+
+```
+
 ```bash
+$ cd node_test
 $ git clone https://github.com/platzi/docker.git
 # Review inner files
 $ ls -la
@@ -228,10 +246,42 @@ node_test             latest        7e40a5bf7cd3   About a minute ago   931MB
 
 # Run container
 $ docker run --rm -p 3000:3000 node_test
+...
 Server listening on port 3000!
+...
+```
+### Run container with bind mount
+
+Modify original Dockerfile to manage application based on `node`
+
+```dockerfile
+FROM node:12
+
+COPY ["package.json", "package-lock.json", "/usr/src/"]
+
+WORKDIR /usr/src
+
+RUN npm install
+
+COPY [".", "/usr/src/"]
+
+EXPOSE 3000
+
+CMD ["npx", "nodemon", "index.js"]
 
 ```
 
-Review browser
-http://localhost:3000/
+```bash
+# Run container with bind mount
+$ docker run --rm -p 3000:3000 -v ~/Docker/docker-experiments/node_files/index.js:/usr/src/index.js node_test
+...
+[nodemon] 1.18.6
+[nodemon] to restart at any time, enter `rs`
+[nodemon] watching: *.*
+[nodemon] starting `node index.js`
+Server listening on port 3000!
+...
+```
+
+Review browser: http://localhost:3000/
 
