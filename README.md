@@ -932,3 +932,90 @@ Removing node_files_db_1  ... done
 Removing network node_files_default
 ...
 ```
+
+# Managing your docker environment
+
+* [Container prune](https://docs.docker.com/engine/reference/commandline/container_prune/)
+* [Network prune](https://docs.docker.com/engine/reference/commandline/network_prune/)
+* [Volume prune](https://docs.docker.com/engine/reference/commandline/volume_prune/)
+* [Image prune](https://docs.docker.com/engine/reference/commandline/image_prune/)
+* [System prune](https://docs.docker.com/engine/reference/commandline/system_prune/)
+
+```bash
+# Show all containers (On or off) 
+$ dcoker ps -a
+...
+CONTAINER ID   IMAGE                 COMMAND            CREATED      STATUS                    PORTS     NAMES
+f29cfc7ec1e7   docker-linux_centos   "/usr/sbin/init"   6 days ago   Exited (137) 5 days ago             os_centos
+40789ca86416   docker-linux_debian   "./start.sh"       7 days ago   Exited (137) 5 days ago             os_debian
+56e5c9a513c6   docker-linux_ubuntu   "./start.sh"       7 days ago   Exited (137) 5 days ago             os_ubuntu
+...
+
+# Clean our system from containers
+$ docker container prune
+$ docker rm -f $(docker ps -aq)
+
+# Show all active networks
+$ docker network ls
+# Clean our system from networks
+$ docker network prune
+
+# Show all volumes
+$ docker volume ls
+# Clean our system from volumes
+$ docker volume prune
+
+# Show all images
+$ docker image ls
+# Clean our system from images
+$ docker image prune
+$ docker rmi $(docker images -aq)
+
+# Clean our system from all
+$ docker system prune
+...
+WARNING! This will remove:
+  - all stopped containers
+  - all networks not used by at least one container
+  - all dangling images
+  - all dangling build cache
+
+Are you sure you want to continue? [y/N] 
+...
+$ docker rm -f $(docker ps -aq)
+```
+
+Limit our containers resources
+
+[Docker stats](https://docs.docker.com/engine/reference/commandline/stats/)
+
+```bash
+$ docker run -d --name app --memory 1g node_test
+$ docker stats
+...
+CONTAINER ID   NAME               CPU %     MEM USAGE / LIMIT     MEM %     NET I/O       BLOCK I/O         PIDS
+7001e448b00d   app                0.00%     16.09MiB / 1GiB       1.57%     8.77kB / 0B   0B / 0B           7
+f7c83b95eebb   node_files_app_1   0.00%     28.4MiB / 31.28GiB    0.09%     15.9kB / 0B   0B / 4.1kB        18
+06a04919b3d2   node_files_db_1    0.73%     61.94MiB / 31.28GiB   0.19%     16.1kB / 0B   12.3kB / 1.64MB   33
+...
+
+$ docker rm -f app
+
+```
+
+If we allocate less memory than is needed for the container, my container doesn't work. With this, we can make experiments of what happens with the container in limited memory environments
+
+<span style="color:orange">WARNING: Your kernel does not support swap limit capabilities or the cgroup is not mounted. Memory limited without swap.</span>
+
+Explanation:
+
+Docker daemon relies on the following virtual files to implement memory and swap limits:
+
+```bash
+/sys/fs/cgroup/memory/memory.limit_in_bytes
+/sys/fs/cgroup/memory/memory.memsw.limit_in_bytes
+```
+
+If your kernel does not support **swap memory limit**, the second file won't be there, and `docker run` won't impose any limitations on the use of the swap space. That way the container is even allowed to use more swap than the `-m, --memory` setting, as if `--memory-swap` had been set to `-1`. Obviously, the container can't use more swap space than you have configured on your system.
+
+However, the warning message is also trying to say that option `-m, --memory` will still take effect, and the maximum amount of user memory (including file cache) will be set as intended.
