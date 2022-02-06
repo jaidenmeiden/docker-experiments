@@ -933,7 +933,7 @@ Removing network node_files_default
 ...
 ```
 
-# Managing your docker environment
+## Managing your docker environment
 
 * [Container prune](https://docs.docker.com/engine/reference/commandline/container_prune/)
 * [Network prune](https://docs.docker.com/engine/reference/commandline/network_prune/)
@@ -1019,3 +1019,23 @@ Docker daemon relies on the following virtual files to implement memory and swap
 If your kernel does not support **swap memory limit**, the second file won't be there, and `docker run` won't impose any limitations on the use of the swap space. That way the container is even allowed to use more swap than the `-m, --memory` setting, as if `--memory-swap` had been set to `-1`. Obviously, the container can't use more swap space than you have configured on your system.
 
 However, the warning message is also trying to say that option `-m, --memory` will still take effect, and the maximum amount of user memory (including file cache) will be set as intended.
+
+## Stop containers correctly
+
+```bash
+$ cd advanced
+$ cat Dockerfile
+...
+FROM ubuntu:trusty
+COPY ["loop.sh", "/"]
+CMD /loop.sh
+...
+
+$ cat loop.sh
+...
+#!/usr/bin/env bash
+trap 'exit 0' SIGTERM
+while true; do :; done
+...
+
+```
