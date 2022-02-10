@@ -225,8 +225,9 @@ CMD ["node", "index.js"]
 ```
 
 ```bash
-$ cd node_test
 $ git clone https://github.com/platzi/docker.git
+$ mv docker node_files
+$ cd node_files
 # Review inner files
 $ ls -la
 > ...
@@ -1020,22 +1021,58 @@ If your kernel does not support **swap memory limit**, the second file won't be 
 
 However, the warning message is also trying to say that option `-m, --memory` will still take effect, and the maximum amount of user memory (including file cache) will be set as intended.
 
-## Stop containers correctly
+## Stop containers correctly (Shell and Exec)
+
+[docker stop](https://docs.docker.com/engine/reference/commandline/stop/)
+
+The main process inside the container will receive `SIGTERM`, and after a grace period, `SIGKILL`. The first signal can be changed with the `STOPSIGNAL` instruction in the container’s Dockerfile, or the `--stop-signal` option to `docker run`.
+
+[docker kill](https://docs.docker.com/engine/reference/commandline/kill/)
+
+The `docker kill` subcommand kills one or more containers. The main process inside the container is sent `SIGKILL` signal (default), or the signal that is specified with the `--signal` option. You can reference a container by its ID, ID-prefix, or name.
+
+[docker exec](https://docs.docker.com/engine/reference/commandline/exec/)
 
 ```bash
-$ cd advanced
+$ cd node_files/advanced/loop
 $ cat Dockerfile
 ...
 FROM ubuntu:trusty
+# Copy file loop.sh to root path into ubuntu os container
 COPY ["loop.sh", "/"]
 CMD /loop.sh
 ...
 
 $ cat loop.sh
+# Execute a infinite loop and receive a signal SIGTERM
 ...
 #!/usr/bin/env bash
 trap 'exit 0' SIGTERM
 while true; do :; done
 ...
+
+# Experiment 1
+
+$ docker build -t loop .
+$ docker run -d --name looper loop
+
+# The stop of the container must be immediate, if you observe 
+# that the stop of the container is very delayed, we can say 
+# that it is malfunctioning and we must analyze; What is happening?
+$ docker stop looper
+
+# Analyzed the exit code. If code is greater than 127, this the result about a wrong signal manage. 
+$ docker ps -l
+
+# Experiment 2
+
+$ docker rm looper
+$ docker run -d --name looper loop
+$ docker kill looper
+
+# Experiment 3
+$ docker rm looper
+$ docker run -d --name looper loop
+$ docker exec looper ps -ef
 
 ```
